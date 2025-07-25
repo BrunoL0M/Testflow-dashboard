@@ -1,0 +1,264 @@
+{% extends 'testing_dashboard/base.html' %}
+
+{% block title %}Dashboard - Testing Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between">
+        <div class="flex-1 min-w-0">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                🎭 Testing Dashboard
+            </h2>
+            <p class="mt-1 text-sm text-gray-500">
+                Resumen de ejecuciones de pruebas con Playwright
+            </p>
+        </div>
+        <div class="mt-4 flex md:mt-0 md:ml-4">
+            <button onclick="location.reload()" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-playwright-500">
+                🔄 Actualizar
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <!-- Total Runs -->
+        <div class="bg-white overflow-hidden shadow-sm rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                            <span class="text-white text-sm">🏃</span>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Runs</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ total_runs }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Suites -->
+        <div class="bg-white overflow-hidden shadow-sm rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                            <span class="text-white text-sm">📁</span>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Test Suites</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ total_suites }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Tests -->
+        <div class="bg-white overflow-hidden shadow-sm rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                            <span class="text-white text-sm">✅</span>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Tests</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ total_tests }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Success Rate -->
+        <div class="bg-white overflow-hidden shadow-sm rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-playwright-500 rounded-full flex items-center justify-center">
+                            <span class="text-white text-sm">📊</span>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Éxito (7 días)</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ recent_success_rate }}%</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts and Recent Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Recent Runs Chart -->
+        <div class="bg-white shadow-sm rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">📈 Actividad Reciente</h3>
+                <p class="text-sm text-gray-500">Ejecuciones de pruebas últimos 7 días</p>
+            </div>
+            <div class="p-6">
+                <canvas id="activityChart" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Browser Distribution -->
+        <div class="bg-white shadow-sm rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">🌐 Distribución por Browser</h3>
+                <p class="text-sm text-gray-500">Tests ejecutados por navegador</p>
+            </div>
+            <div class="p-6">
+                {% if browser_stats %}
+                    <div class="space-y-4">
+                        {% for browser in browser_stats %}
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 w-16 text-sm text-gray-500">
+                                {% if browser.browser == 'chromium' %}🟢{% elif browser.browser == 'firefox' %}🟠{% elif browser.browser == 'webkit' %}🔵{% else %}⚪{% endif %}
+                                {{ browser.browser|title }}
+                            </div>
+                            <div class="flex-1 ml-4">
+                                <div class="bg-gray-200 rounded-full h-2">
+                                    <div class="bg-playwright-500 h-2 rounded-full" style="width: {% widthratio browser.count total_tests 100 %}%"></div>
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0 ml-4 text-sm text-gray-900">
+                                {{ browser.count }} tests
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-gray-500 text-center py-8">No hay datos de navegadores disponibles</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Latest Runs -->
+    <div class="bg-white shadow-sm rounded-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-medium text-gray-900">🕒 Últimas Ejecuciones</h3>
+                <a href="{% url 'testing_dashboard:run_list' %}" class="text-sm text-playwright-600 hover:text-playwright-700">
+                    Ver todas →
+                </a>
+            </div>
+        </div>
+        <div class="overflow-hidden">
+            {% if latest_runs %}
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Run</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tests</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Éxito</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duración</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for run in latest_runs %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <a href="{% url 'testing_dashboard:run_detail' run.pk %}" class="text-playwright-600 hover:text-playwright-700 font-medium">
+                                Run #{{ run.id }}
+                            </a>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                {% if run.status == 'passed' %}bg-green-100 text-green-800
+                                {% elif run.status == 'failed' %}bg-red-100 text-red-800
+                                {% elif run.status == 'running' %}bg-yellow-100 text-yellow-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {% if run.status == 'passed' %}✅ Passed
+                                {% elif run.status == 'failed' %}❌ Failed
+                                {% elif run.status == 'running' %}⏳ Running
+                                {% else %}❓ {{ run.status|title }}{% endif %}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ run.total_tests }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ run.success_rate }}%
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if run.duration_ms %}{{ run.duration_ms|floatformat:0 }}ms{% else %}-{% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ run.started_at|date:"d/m/Y H:i" }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="text-center py-12">
+                <p class="text-gray-500">No hay ejecuciones recientes</p>
+                <p class="text-sm text-gray-400 mt-2">Ejecuta algunas pruebas de Playwright para ver datos aquí</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Chart para actividad reciente
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('{% url "testing_dashboard:stats_api" %}')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('activityChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Runs ejecutados',
+                        data: data.run_counts,
+                        borderColor: '#22c55e',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error cargando datos del chart:', error);
+            document.getElementById('activityChart').style.display = 'none';
+        });
+});
+</script>
+{% endblock %}
